@@ -54,10 +54,13 @@ remover_diretorios_antigos_ctime() {
 
 # Função para encontrar subdiretórios com tamanho igual ou superior ao definido
 encontrar_diretorios_grandes() {
-	local dir="$1"
-	echo "Buscando diretórios maiores que $tamanho_arquivos em: $dir"
-	du -sh -t "$tamanho_arquivos" "$dir"/* 2>/dev/null | awk '{print $2}'
+    local dir="$1"
+    # O >&2 no final envia a mensagem para o terminal sem misturar com o resultado do 'du'
+    echo "Buscando diretórios maiores que $tamanho_arquivos em: $dir" >&2
+    du -sh -t "$tamanho_arquivos" "$dir"/* 2>/dev/null | awk '{print $2}'
 }
+
+
 
 # Função para remover diretórios grandes
 remover_diretorios_grandes() {
