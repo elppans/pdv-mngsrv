@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 # Comando 1:
 # find "$diretorio_base" -type d -ctime +"$numero_dias" -exec rm -r {} \;
