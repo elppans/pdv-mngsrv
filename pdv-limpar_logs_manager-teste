@@ -35,7 +35,7 @@ tamanho_arquivos="1GB"
 # Lista de diretórios base (adicione quantos quiser)
 diretorios_base=(
 	"/usr/local/apache22/htdocs/manager/Logs"
-	"/usr/local/apache22/htdocs/manager/Arquivos"
+	# "/usr/local/apache22/htdocs/manager/Arquivos"
 )
 
 # Função para remover diretórios antigos com base em mtime
