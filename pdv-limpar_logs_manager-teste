@@ -1,0 +1,86 @@
+#!/bin/bash
+# shellcheck disable=SC2155
+
+# Comando 1:
+# find "$diretorio_base" -type d -ctime +"$numero_dias" -exec echo "{}" \;
+
+# Busca recursiva por diretórios dentro de "$diretorio_base"
+# Usa o critério de tempo 'ctime', que considera alterações nos metadados
+#   (como permissões, dono, ou criação do diretório)
+# Remove os diretórios encontrados com 'rm -r' (recursivo, mas não forçado)
+# Pode apagar diretórios que tiveram seus atributos alterados, mesmo sem mudança de conteúdo
+
+# Comando 2:
+# find "$diretorio_base" -maxdepth 1 -type d -mtime +"$numero_dias" -exec echo "{}" \;
+
+# Busca apenas no nível atual de "$diretorio_base" (sem entrar em subdiretórios)
+# Usa o critério de tempo 'mtime', que considera a última modificação de conteúdo
+# Remove os diretórios encontrados com 'rm -rf' (recursivo e forçado)
+# Ideal para apagar diretórios que não foram modificados recentemente e estão no topo da hierarquia
+
+# Diferenças principais:
+# - 'ctime' é mais sensível a alterações administrativas (como chmod ou chown)
+# - 'mtime' é mais útil para identificar diretórios realmente "inativos"
+# - 'maxdepth 1' limita a busca ao nível atual, evitando apagar subdiretórios inadvertidamente
+# - 'rm -rf' é mais agressivo e ignora permissões, use com cautela
+
+# Dica: sempre testar com 'echo' ou 'ls' antes de executar 'rm' para evitar exclusões acidentais
+
+# limpar_logs_manager
+
+# Configurações
+numero_dias="7"
+tamanho_arquivos="1GB"
+
+# Lista de diretórios base (adicione quantos quiser)
+diretorios_base=(
+	"/usr/local/apache22/htdocs/manager/Logs"
+	"/usr/local/apache22/htdocs/manager/Arquivos"
+)
+
+# Função para remover diretórios antigos com base em mtime
+remover_diretorios_antigos_mtime() {
+	local dir="$1"
+	echo "[mtime] Removendo diretórios com mais de $numero_dias dias em: $dir"
+	find "$dir" -maxdepth 1 -type d -mtime +"$numero_dias" -exec echo "{}" \;
+}
+
+# Função para remover diretórios antigos com base em ctime
+remover_diretorios_antigos_ctime() {
+	local dir="$1"
+	echo " Removendo diretórios com mais de $numero_dias dias em: $dir"
+	find "$dir" -type d -ctime +"$numero_dias" -exec echo "{}" \;
+}
+
+# Função para encontrar subdiretórios com tamanho igual ou superior ao definido
+encontrar_diretorios_grandes() {
+	local dir="$1"
+	echo "Buscando diretórios maiores que $tamanho_arquivos em: $dir"
+	du -sh -t "$tamanho_arquivos" "$dir"/* 2>/dev/null | awk '{print $2}'
+}
+
+# Função para remover diretórios grandes
+remover_diretorios_grandes() {
+	local dir="$1"
+	local subdiretorios=$(encontrar_diretorios_grandes "$dir")
+	for subdir in $subdiretorios; do
+		echo "Removendo diretório grande: $subdir"
+		rm -rf "$subdir"
+	done
+}
+
+# Função principal para processar todos os diretórios
+executar_limpeza() {
+	for diretorio_base in "${diretorios_base[@]}"; do
+		echo "Processando: $diretorio_base"
+		remover_diretorios_antigos_mtime "$diretorio_base"
+		remover_diretorios_antigos_ctime "$diretorio_base"
+		remover_diretorios_grandes "$diretorio_base"
+		echo "Limpeza concluída para: $diretorio_base"
+		echo "-----------------------------"
+	done
+	echo "Todas as limpezas foram concluídas!"
+}
+
+# Execução
+executar_limpeza
